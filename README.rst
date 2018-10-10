@@ -3,6 +3,8 @@ django-pgtree
 
 A generic model for storing heirachial data in trees, using `PostgreSQL's built-in ltree data type <ltree_>`_, plus a ltree field for you to use on your own models.
 
+Supports Django 2.0+ on Python 3.5+.
+
 .. _ltree: https://www.postgresql.org/docs/current/static/ltree.html
 
 .. code-block:: python

@@ -21,7 +21,7 @@ class LtreeField(Field):
             return value
         if isinstance(value, str):
             return value.split('.')
-        raise ValueError(f"Don't know how to handle {value!r}")
+        raise ValueError("Don't know how to handle {!r}".format(value))
 
     def get_prep_value(self, value):
         if isinstance(value, str):
@@ -37,7 +37,7 @@ class BinaryLookup(Lookup):
         lhs, lhs_params = self.process_lhs(compiler, connection)
         rhs, rhs_params = self.process_rhs(compiler, connection)
         params = lhs_params + rhs_params
-        return f'{lhs} {self.operator} {rhs}', params
+        return ' '.join((lhs, self.operator, rhs)), params
 
 
 @LtreeField.register_lookup
