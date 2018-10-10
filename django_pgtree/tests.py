@@ -41,3 +41,14 @@ def test_family(animal):
     mammal = T.objects.get(name='Mammal')
     assert {x.name for x in mammal.family} == {
         'Animal', 'Mammal', 'Cat', 'Dog'}
+
+def test_reparent(animal):
+    marsupial = T.objects.get(name='Marsupial')
+    mammal = T.objects.get(name='Mammal')
+    marsupial.parent = mammal
+    marsupial.save()
+    assert marsupial.tree_path[:2] == mammal.tree_path
+    koala = T.objects.get(name='Koala')
+    assert koala.parent == marsupial
+    assert koala.tree_path[:2] == mammal.tree_path
+    assert mammal in koala.ancestors

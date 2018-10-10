@@ -33,11 +33,10 @@ class TreeNode(models.Model):
     def parent(self):
         parent_path = self.tree_path[:-
                                      1]  # pylint: disable=unsubscriptable-object
-        print(parent_path)
         return self.__class__.objects.get(tree_path=parent_path)
 
     @parent.setter
-    def __set_parent(self, new_parent):
+    def parent(self, new_parent):
         if new_parent.tree_path is None:
             raise ValueError(
                 "Parent node must be saved before receiving children")
@@ -66,7 +65,7 @@ class TreeNode(models.Model):
                 tree_path__descendant_of=self.__old_tree_path
             ).update(
                 tree_path=LtreeConcat(
-                    '.'.join(self.tree_path),
+                    models.Value('.'.join(self.tree_path)),
                     Subpath(models.F('tree_path'), len(self.__old_tree_path)),
                 )
             )
