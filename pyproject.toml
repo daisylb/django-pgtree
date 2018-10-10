@@ -1,0 +1,12 @@
+[tool.poetry]
+name = "django-pgtree"
+version = "0.1.0"
+description = "Heirachial data for Django with Postgres."
+authors = ["Adam Brenecki"]
+license = "ISC"
+
+[tool.poetry.dependencies]
+python = ">=3.4"
+
+[tool.poetry.dev-dependencies]
+# Put dev dependencies in tox.ini, not here
