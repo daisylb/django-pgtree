@@ -19,13 +19,13 @@ def animal():
 
 
 def test_descendants(animal):
-    assert {x.name for x in animal.descendants} == {
-        'Mammal', 'Marsupial', 'Cat', 'Dog', 'Koala', 'Kangaroo'}
+    assert [x.name for x in animal.descendants] == [
+        'Mammal', 'Cat', 'Dog', 'Marsupial', 'Koala', 'Kangaroo']
 
 
 def test_ancestors(animal):
     koala = T.objects.get(name='Koala')
-    assert {x.name for x in koala.ancestors} == {'Marsupial', 'Animal'}
+    assert [x.name for x in koala.ancestors] == ['Animal', 'Marsupial']
 
 
 def test_parent(animal):
@@ -34,13 +34,12 @@ def test_parent(animal):
 
 
 def test_children(animal):
-    assert {x.name for x in animal.children} == {'Mammal', 'Marsupial'}
+    assert [x.name for x in animal.children] == ['Mammal', 'Marsupial']
 
 
 def test_family(animal):
     mammal = T.objects.get(name='Mammal')
-    assert {x.name for x in mammal.family} == {
-        'Animal', 'Mammal', 'Cat', 'Dog'}
+    assert [x.name for x in mammal.family] == ['Animal', 'Mammal', 'Cat', 'Dog']
 
 def test_reparent(animal):
     marsupial = T.objects.get(name='Marsupial')
@@ -52,3 +51,9 @@ def test_reparent(animal):
     assert koala.parent == marsupial
     assert koala.tree_path[:2] == mammal.tree_path
     assert mammal in koala.ancestors
+
+
+def test_top_level_ordering(animal):
+    all_l = list(T.objects.all())
+    assert all_l[0] == animal
+    assert all_l[-1].name == 'Plant'

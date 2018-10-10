@@ -1,5 +1,6 @@
 from django.contrib.postgres.indexes import GistIndex
 from django.db import models
+from django.db.models import functions as f
 from django.db.transaction import atomic
 from django.utils.crypto import get_random_string
 
@@ -14,6 +15,9 @@ class LtreeConcat(models.Func):
 class Subpath(models.Func):
     function = 'subpath'
 
+class Text2Ltree(models.Func):
+    function = 'text2ltree'
+
 
 class TreeNode(models.Model):
     __old_tree_path = None
@@ -22,6 +26,7 @@ class TreeNode(models.Model):
     class Meta:
         abstract = True
         indexes = (GistIndex(fields=['tree_path'], name='tree_path_idx'),)
+        ordering = ('tree_path',)
 
     def __init__(self, *args, parent=None, **kwargs):
         if parent is not None:
@@ -45,31 +50,40 @@ class TreeNode(models.Model):
         self.tree_path = [*new_parent.tree_path, get_random_string(length=32)]
 
     def save(self, *args, **kwargs):  # pylint: disable=arguments-differ
+        tree_path_needs_refresh = False
         if not self.tree_path:
+            tree_path_needs_refresh = True
             # Ensure that we have a tree_path set. We set a random one at this point,
             # because we don't know whether this node will become the parent of other
             # nodes down the track.
-            self.tree_path = [get_random_string(length=32)]
+            largest_ltree = models.Subquery(self.__class__.objects.order_by('-tree_path').values('tree_path')[:1])
+            largest_ltree_root_num = f.Cast(f.Cast(Subpath(largest_ltree, 0, 1), models.CharField()), models.BigIntegerField())
+            self.tree_path = Text2Ltree(f.Cast(f.Coalesce(largest_ltree_root_num, -2**32) + (2**32), models.CharField()))
 
         # If we haven't changed the parent, save as normal.
         if self.__old_tree_path is None:
-            return super().save(*args, **kwargs)
+            rv = super().save(*args, **kwargs)
 
         # If we have, use a transaction to avoid other contexts seeing the intermediate
         # state where our descendants aren't connected to us.
-        with atomic():
-            rv = super().save(*args, **kwargs)
-            # Move all of our descendants along with us, by substituting our old ltree
-            # prefix with our new one, in every descendant that has that prefix.
-            self.__class__.objects.filter(
-                tree_path__descendant_of=self.__old_tree_path
-            ).update(
-                tree_path=LtreeConcat(
-                    models.Value('.'.join(self.tree_path)),
-                    Subpath(models.F('tree_path'), len(self.__old_tree_path)),
+        else:
+            with atomic():
+                rv = super().save(*args, **kwargs)
+                # Move all of our descendants along with us, by substituting our old ltree
+                # prefix with our new one, in every descendant that has that prefix.
+                self.__class__.objects.filter(
+                    tree_path__descendant_of=self.__old_tree_path
+                ).update(
+                    tree_path=LtreeConcat(
+                        models.Value('.'.join(self.tree_path)),
+                        Subpath(models.F('tree_path'), len(self.__old_tree_path)),
+                    )
                 )
-            )
-            return rv
+        
+        if tree_path_needs_refresh:
+            self.refresh_from_db(fields=('tree_path',))
+        
+        return rv
 
     @property
     def ancestors(self):
