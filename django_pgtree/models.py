@@ -6,6 +6,8 @@ from django.utils.crypto import get_random_string
 
 from .fields import LtreeField
 
+GAP = 1_000_000_000
+
 
 class LtreeConcat(models.Func):
     arg_joiner = '||'
@@ -20,8 +22,8 @@ class Text2Ltree(models.Func):
 
 
 class TreeNode(models.Model):
-    __old_tree_path = None
-    tree_path = LtreeField()
+    __new_parent = None
+    tree_path = LtreeField(unique=True)
 
     class Meta:
         abstract = True
@@ -30,14 +32,15 @@ class TreeNode(models.Model):
 
     def __init__(self, *args, parent=None, **kwargs):
         if parent is not None:
-            kwargs['tree_path'] = [*parent.tree_path,
-                                   get_random_string(length=32)]
+            self.__new_parent = parent
         super().__init__(*args, **kwargs)
 
     @property
     def parent(self):
+        if self.__new_parent is not None:
+            return self.__new_parent
         parent_path = self.tree_path[:-
-                                     1]  # pylint: disable=unsubscriptable-object
+                                    1]  # pylint: disable=unsubscriptable-object
         return self.__class__.objects.get(tree_path=parent_path)
 
     @parent.setter
@@ -46,22 +49,54 @@ class TreeNode(models.Model):
             raise ValueError(
                 "Parent node must be saved before receiving children")
         # Replace our tree_path with a new one that has our new parent's
-        self.__old_tree_path = self.tree_path
-        self.tree_path = [*new_parent.tree_path, get_random_string(length=32)]
+        self.__new_parent = new_parent
+
+    def __next_tree_path_qx(self, prefix=None):
+        if prefix is None:
+            prefix = []
+        
+        # These are all the siblings of the target position, in reverse tree order.
+        # If we don't have a prefix, this will be all root nodes.
+        sibling_queryset = self.__class__.objects.filter(tree_path__matches_lquery=[*prefix, '*{1}']).order_by('-tree_path')
+        # This query expression is the full ltree of the last sibling by tree order.
+        last_sibling_tree_path = models.Subquery(sibling_queryset.values('tree_path')[:1])
+
+        # Django doesn't allow the use of column references in an INSERT statement,
+        # because it makes the assumption that they refer to columns in the
+        # to-be-inserted row, the values for which aren't yet known.
+        # Unfortunately, this means we can't use a subquery that refers to column
+        # values anywhere internally, even though the columns it refers to are subquery
+        # result columns. To get around this, we override the contains_column_references
+        # property on the subquery with a static False, so that Django's check doesn't
+        # cross the subquery boundary.
+        last_sibling_tree_path.contains_column_references = False
+
+        # This query expression is the rightmost component of that ltree. The double
+        # cast is because PostgreSQL doesn't let you cast directly from ltree to bigint.
+        last_sibling_last_value = f.Cast(f.Cast(Subpath(last_sibling_tree_path, -1), models.CharField()), models.BigIntegerField())
+        # This query expression is an ltree containing that value, plus GAP, or just
+        # GAP if there is no existing siblings. Again, we need to double cast.
+        new_last_value = Text2Ltree(f.Cast(f.Coalesce(last_sibling_last_value, 0) + (GAP), models.CharField()))
+
+        # If we have a prefix, we prepend that to the resulting ltree.
+        if not prefix:
+            return new_last_value
+        return LtreeConcat(models.Value('.'.join(prefix)), new_last_value)
 
     def save(self, *args, **kwargs):  # pylint: disable=arguments-differ
         tree_path_needs_refresh = False
+        old_tree_path = None
+
+        if self.__new_parent is not None:
+            tree_path_needs_refresh = True
+            old_tree_path = self.tree_path or None
+            self.tree_path = self.__next_tree_path_qx(self.__new_parent.tree_path)
         if not self.tree_path:
             tree_path_needs_refresh = True
-            # Ensure that we have a tree_path set. We set a random one at this point,
-            # because we don't know whether this node will become the parent of other
-            # nodes down the track.
-            largest_ltree = models.Subquery(self.__class__.objects.order_by('-tree_path').values('tree_path')[:1])
-            largest_ltree_root_num = f.Cast(f.Cast(Subpath(largest_ltree, 0, 1), models.CharField()), models.BigIntegerField())
-            self.tree_path = Text2Ltree(f.Cast(f.Coalesce(largest_ltree_root_num, -2**32) + (2**32), models.CharField()))
+            self.tree_path = self.__next_tree_path_qx()
 
         # If we haven't changed the parent, save as normal.
-        if self.__old_tree_path is None:
+        if old_tree_path is None:
             rv = super().save(*args, **kwargs)
 
         # If we have, use a transaction to avoid other contexts seeing the intermediate
@@ -71,18 +106,21 @@ class TreeNode(models.Model):
                 rv = super().save(*args, **kwargs)
                 # Move all of our descendants along with us, by substituting our old ltree
                 # prefix with our new one, in every descendant that has that prefix.
+                self.refresh_from_db(fields=('tree_path',))
+                tree_path_needs_refresh = False
                 self.__class__.objects.filter(
-                    tree_path__descendant_of=self.__old_tree_path
+                    tree_path__descendant_of=old_tree_path
                 ).update(
                     tree_path=LtreeConcat(
                         models.Value('.'.join(self.tree_path)),
-                        Subpath(models.F('tree_path'), len(self.__old_tree_path)),
+                        Subpath(models.F('tree_path'), len(old_tree_path)),
                     )
                 )
         
         if tree_path_needs_refresh:
             self.refresh_from_db(fields=('tree_path',))
         
+        print('for object {!r}, old_tree_path is {!r}, tree_path is {!r}'.format(self, old_tree_path, self.tree_path))
         return rv
 
     @property

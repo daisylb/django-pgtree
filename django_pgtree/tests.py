@@ -44,13 +44,25 @@ def test_family(animal):
 def test_reparent(animal):
     marsupial = T.objects.get(name='Marsupial')
     mammal = T.objects.get(name='Mammal')
+
+    dog = T.objects.get(name='Dog')
+    dog_tree_path = dog.tree_path
+    plant = T.objects.get(name='Plant')
+    plant_tree_path = plant.tree_path
+
     marsupial.parent = mammal
     marsupial.save()
+
     assert marsupial.tree_path[:2] == mammal.tree_path
     koala = T.objects.get(name='Koala')
     assert koala.parent == marsupial
     assert koala.tree_path[:2] == mammal.tree_path
     assert mammal in koala.ancestors
+
+    dog.refresh_from_db()
+    assert dog.tree_path == dog_tree_path
+    plant.refresh_from_db()
+    assert plant.tree_path == plant_tree_path
 
 
 def test_top_level_ordering(animal):

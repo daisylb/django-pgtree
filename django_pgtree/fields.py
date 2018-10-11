@@ -24,11 +24,13 @@ class LtreeField(Field):
         raise ValueError("Don't know how to handle {!r}".format(value))
 
     def get_prep_value(self, value):
-        if isinstance(value, str):
+        if isinstance(value, str) or value is None:
             return value
         return '.'.join(value)
 
     def from_db_value(self, value, expression, connection):
+        if not value:
+            return []
         return value.split('.')
 
 
