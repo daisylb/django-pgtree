@@ -6,7 +6,7 @@ from django.utils.crypto import get_random_string
 
 from .fields import LtreeField
 
-GAP = 1_000_000_000
+GAP = 1000000000
 
 
 class LtreeConcat(models.Func):
@@ -21,9 +21,16 @@ class Text2Ltree(models.Func):
     function = 'text2ltree'
 
 
+class TreeQuerySet(models.QuerySet):
+    def roots(self):
+        return self.filter(tree_path__matches_lquery=['*{1}'])
+
+
 class TreeNode(models.Model):
     __new_parent = None
     tree_path = LtreeField(unique=True)
+
+    objects = TreeQuerySet.as_manager()
 
     class Meta:
         abstract = True

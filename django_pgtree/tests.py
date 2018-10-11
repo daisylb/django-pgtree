@@ -65,7 +65,6 @@ def test_reparent(animal):
     assert plant.tree_path == plant_tree_path
 
 
-def test_top_level_ordering(animal):
-    all_l = list(T.objects.all())
-    assert all_l[0] == animal
-    assert all_l[-1].name == 'Plant'
+def test_roots(animal):
+    roots = T.objects.roots()
+    assert [x.name for x in roots] == ['Animal', 'Plant']
