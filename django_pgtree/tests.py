@@ -11,6 +11,8 @@ def animal():
     mammal = T.objects.create(name='Mammal', parent=animal)
     T.objects.create(name='Cat', parent=mammal)
     T.objects.create(name='Dog', parent=mammal)
+    T.objects.create(name='Seal', parent=mammal)
+    T.objects.create(name='Bear', parent=mammal)
     marsupial = T.objects.create(name='Marsupial', parent=animal)
     T.objects.create(name='Koala', parent=marsupial)
     T.objects.create(name='Kangaroo', parent=marsupial)
@@ -20,7 +22,7 @@ def animal():
 
 def test_descendants(animal):
     assert [x.name for x in animal.descendants] == [
-        'Mammal', 'Cat', 'Dog', 'Marsupial', 'Koala', 'Kangaroo']
+        'Mammal', 'Cat', 'Dog', 'Seal', 'Bear', 'Marsupial', 'Koala', 'Kangaroo']
 
 
 def test_ancestors(animal):
@@ -39,7 +41,7 @@ def test_children(animal):
 
 def test_family(animal):
     mammal = T.objects.get(name='Mammal')
-    assert [x.name for x in mammal.family] == ['Animal', 'Mammal', 'Cat', 'Dog']
+    assert [x.name for x in mammal.family] == ['Animal', 'Mammal', 'Cat', 'Dog', 'Seal', 'Bear']
 
 def test_reparent(animal):
     marsupial = T.objects.get(name='Marsupial')
@@ -68,3 +70,10 @@ def test_reparent(animal):
 def test_roots(animal):
     roots = T.objects.roots()
     assert [x.name for x in roots] == ['Animal', 'Plant']
+
+def test_relocate_in_between(animal):
+    seal = T.objects.get(name='Seal')
+    cat = T.objects.get(name='Cat')
+    seal.relocate(after=cat)
+    seal.save()
+    assert [x.name for x in cat.parent.children] == ['Cat', 'Seal', 'Dog', 'Bear']

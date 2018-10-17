@@ -89,6 +89,38 @@ class TreeNode(models.Model):
         if not prefix:
             return new_last_value
         return LtreeConcat(models.Value('.'.join(prefix)), new_last_value)
+    
+    def relocate(self, *, after=None, before=None):
+        if after is None and before is None:
+            raise ValueError("You must supply at least one of before or after")
+        
+        new_prev_child = after
+        new_next_child = before
+
+        if new_prev_child is None:
+            new_prev_child = new_next_child.siblings.filter(tree_path__lt=new_next_child.tree_path).order_by('tree_path').last()
+            # nb: if we are trying to move into the first position, after will be none
+        
+        if new_next_child is None:
+            new_next_child = new_prev_child.siblings.filter(tree_path__gt=new_prev_child.tree_path).order_by('tree_path').first()
+            if new_next_child is None:
+                # this is the case where we want to move to the last position
+                # we can just (re-)set the parent, since that's its default
+                # behaviour
+                self.parent = after.parent
+                return
+                
+        if new_next_child is not None and new_prev_child.tree_path[:-1] != new_next_child.tree_path[:-1]:
+            raise ValueError("Before and after nodes aren't actually siblings")
+        
+        next_v = int(new_next_child.tree_path[-1])
+        if new_prev_child is None:
+            self.tree_path = new_next_child.tree_path[:-1] + [str(next_v // 2)]
+        else:
+            prev_v = int(new_prev_child.tree_path[-1])
+            this_v = prev_v + (next_v - prev_v) // 2
+            self.tree_path = new_prev_child.tree_path[:-1] + [str(this_v)]
+
 
     def save(self, *args, **kwargs):  # pylint: disable=arguments-differ
         tree_path_needs_refresh = False
