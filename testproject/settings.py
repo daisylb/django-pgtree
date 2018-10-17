@@ -73,11 +73,13 @@ WSGI_APPLICATION = "testproject.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
-
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
         "NAME": "django-pgtree-test",
+        "HOST": os.environ.get("PG_HOST", ""),
+        "USER": os.environ.get("PG_USER", ""),
+        "PASSWORD": os.environ.get("PG_PASSWORD", ""),
     }
 }
 

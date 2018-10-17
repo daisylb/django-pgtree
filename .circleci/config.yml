@@ -1,0 +1,96 @@
+version: 2
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test-py37
+      - test-py36
+      - test-py35
+      - pre-commit
+jobs:
+  test-py37: &test-template
+    docker:
+      - image: circleci/python:3.7
+      - &test-template-pg
+        image: postgres:latest
+        name: pg
+        environment:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: pass
+          POSTGRES_DB: postgres
+      - &test-template-redis
+        image: redis:latest
+    environment: &test-template-env
+      PY_FACTOR: py37
+      PG_HOST: pg
+      PG_USER: user
+      PG_PASSWORD: pass
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "pyproject.lock" }}-{{ checksum "tox.ini" }}
+          - v1-dependencies-
+      - run:
+          name: Installing top-level dependencies
+          command: |
+            export PATH=~/.local/bin:$PATH
+            pip install --user tox poetry
+      - run:
+          name: Waiting for Postgres to start up
+          command: |
+            for i in `seq 1 60`;
+            do
+              nc -z $PG_HOST 5432 && echo Success && exit 0
+              echo -n .
+              sleep 1
+            done
+            echo Failed waiting for Postgres && exit 1
+      - run:
+          name: Running tests
+          command: |
+            export PATH=~/.local/bin:$PATH
+            export TOXENV=$(tox --listenvs | grep "^${PY_FACTOR}-" | tr '\n' ',')
+            tox
+      - save_cache:
+          paths:
+            - ~/.local
+            - ./.tox
+          key: v1-dependencies-{{ checksum "pyproject.lock" }}-{{ checksum "tox.ini" }}
+  test-py36:
+    <<: *test-template
+    docker:
+      - image: circleci/python:3.6
+      - *test-template-pg
+      - *test-template-redis
+    environment:
+      <<: *test-template-env
+      PY_FACTOR: py36
+  test-py35:
+    <<: *test-template
+    docker:
+      - image: circleci/python:3.5
+      - *test-template-pg
+      - *test-template-redis
+    environment:
+      <<: *test-template-env
+      PY_FACTOR: py35
+  pre-commit:
+    docker:
+      - image: circleci/python:3.7
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+          - v1-pre-commit
+      - run:
+          name: install pre-commit
+          command: pip install --user pre-commit
+      - run:
+          name: run pre-commit
+          command: ~/.local/bin/pre-commit run --all-files
+      - save_cache:
+          paths:
+            - ~/.local
+            - ~/.cache/pre-commit
+          key: v1-pre-commit
