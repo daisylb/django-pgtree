@@ -1,0 +1,37 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v1.4.0
+    hooks:
+    -   id: check-added-large-files
+        exclude: partsapp\/static\/highcharts\/highcharts\.src\.js$
+    -   id: check-case-conflict
+    -   id: check-merge-conflict
+    -   id: debug-statements
+    -   id: end-of-file-fixer
+    -   id: trailing-whitespace
+    -   id: requirements-txt-fixer
+        exclude: migrations\/[^/]*\.py$|settings\/[^/]*\.py|highcharts\/$|docs\/conf\.py
+-   repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.1.5
+    hooks:
+    -   id: forbid-crlf
+        exclude: \.csv$|\.png$|\.bat$
+    -   id: forbid-tabs
+        exclude: Makefile|\.bat|highcharts\/|highcharts\/modules\/$|\.png
+-   repo: git://github.com/adambrenecki/pre-commit-python-sorter
+    rev: 1.0.5
+    hooks:
+    -   id: python-import-sorter
+        exclude: migrations\/[^/]*\.py$|docs\/conf\.py
+-   repo: https://github.com/prettier/prettier
+    rev: 1.14.0
+    hooks:
+    -   id: prettier
+        types: [file]
+        files: \.(css|less|scss|ts|tsx|graphql|gql|json|js|jsx)$
+        exclude: \.min\.(js|css)$|^parts/apps/partsapp/static/highcharts
+-   repo: https://github.com/ambv/black
+    rev: stable
+    hooks:
+    - id: black
+      language_version: python3.7

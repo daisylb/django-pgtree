@@ -6,18 +6,15 @@ import django_pgtree.fields
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('testapp', '0001_initial'),
-    ]
+    dependencies = [("testapp", "0001_initial")]
 
     operations = [
         migrations.AlterModelOptions(
-            name='testmodel',
-            options={'ordering': ('tree_path',)},
+            name="testmodel", options={"ordering": ("tree_path",)}
         ),
         migrations.AlterField(
-            model_name='testmodel',
-            name='tree_path',
+            model_name="testmodel",
+            name="tree_path",
             field=django_pgtree.fields.LtreeField(unique=True),
         ),
     ]

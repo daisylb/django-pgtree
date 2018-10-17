@@ -9,23 +9,30 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='TestModel',
+            name="TestModel",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('tree_path', django_pgtree.fields.LtreeField()),
-                ('name', models.CharField(max_length=128)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("tree_path", django_pgtree.fields.LtreeField()),
+                ("name", models.CharField(max_length=128)),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
         migrations.AddIndex(
-            model_name='testmodel',
-            index=django.contrib.postgres.indexes.GistIndex(fields=['tree_path'], name='tree_path_idx'),
+            model_name="testmodel",
+            index=django.contrib.postgres.indexes.GistIndex(
+                fields=["tree_path"], name="tree_path_idx"
+            ),
         ),
     ]
