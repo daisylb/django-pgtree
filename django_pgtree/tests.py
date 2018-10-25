@@ -93,3 +93,9 @@ def test_relocate_in_between(animal):
     seal.relocate(after=cat)
     seal.save()
     assert [x.name for x in cat.parent.children] == ["Cat", "Seal", "Dog", "Bear"]
+
+
+def test_ordering_past_10():
+    for i in range(1, 12):
+        T.objects.create(name=str(i))
+    assert [x.name for x in T.objects.all()] == [str(x) for x in range(1, 12)]

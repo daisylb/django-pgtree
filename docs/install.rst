@@ -1,7 +1,7 @@
 Installing django-pgtree
 ========================
 
-First, install the ``django-pgtree`` package from PyPI using your package manager of choice:
+Install the ``django-pgtree`` package from PyPI using your package manager of choice:
 
 .. code-block:: sh
 
@@ -11,11 +11,10 @@ First, install the ``django-pgtree`` package from PyPI using your package manage
     # or
     $ pipenv install django-pgtree
 
-.. note::
 
-    Currently, you don't have to add anything to ``INSTALLED_APPS``.
+Then, add ``django_pgtree`` to ``INSTALLED_APPS``.
 
-Second, run the following SQL command on any database that's going to use django-pgtree fields or models:
+On your development database and when you first deploy, you'll also need to run the following SQL command on any database that's going to use django-pgtree fields or models:
 
 .. code-block:: sql
 
