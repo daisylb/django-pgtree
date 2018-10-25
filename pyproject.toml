@@ -9,4 +9,8 @@ license = "ISC"
 python = ">=3.4"
 
 [tool.poetry.dev-dependencies]
-# Put dev dependencies in tox.ini, not here
+
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
