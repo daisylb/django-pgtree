@@ -30,8 +30,11 @@ class TreeQuerySet(models.QuerySet):
         return self.filter(tree_path__matches_lquery=["*{1}"])
 
 
+UNCHANGED = object()
+
+
 class TreeNode(models.Model):
-    __new_parent = None
+    __new_parent = UNCHANGED
     tree_path = LtreeField(unique=True)
 
     objects = TreeQuerySet.as_manager()
@@ -48,14 +51,14 @@ class TreeNode(models.Model):
 
     @property
     def parent(self):
-        if self.__new_parent is not None:
+        if self.__new_parent is not UNCHANGED:
             return self.__new_parent
         parent_path = self.tree_path[:-1]  # pylint: disable=unsubscriptable-object
         return self.__class__.objects.get(tree_path=parent_path)
 
     @parent.setter
     def parent(self, new_parent):
-        if new_parent.tree_path is None:
+        if new_parent is not None and new_parent.tree_path is None:
             raise ValueError("Parent node must be saved before receiving children")
         # Replace our tree_path with a new one that has our new parent's
         self.__new_parent = new_parent
@@ -118,10 +121,14 @@ class TreeNode(models.Model):
         tree_path_needs_refresh = False
         old_tree_path = None
 
-        if self.__new_parent is not None:
+        if self.__new_parent is None:
+            old_tree_path = self.tree_path or None
+            self.tree_path = self.__next_tree_path_qx([])
+        elif self.__new_parent is not UNCHANGED:
             tree_path_needs_refresh = True
             old_tree_path = self.tree_path or None
             self.tree_path = self.__next_tree_path_qx(self.__new_parent.tree_path)
+
         if not self.tree_path:
             tree_path_needs_refresh = True
             self.tree_path = self.__next_tree_path_qx()
