@@ -50,7 +50,7 @@ jobs:
           name: Running tests
           command: |
             export PATH=~/.local/bin:$PATH
-            export TOXENV=$(tox --listenvs | grep "^${PY_FACTOR}-" | tr '\n' ',')
+            export TOXENV=$(tox --listenvs | grep "^test-${PY_FACTOR}-" | tr '\n' ',')
             tox
       - save_cache:
           paths:
