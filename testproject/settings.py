@@ -37,8 +37,11 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "django_pgtree",
+    # In this case we're creating the ltree extension in a migration,
+    # so it needs to come before django_pgtree (which does a CREATE
+    # FUNCTION that uses ltree in its migrations)
     "testproject.testapp",
+    "django_pgtree",
 ]
 
 MIDDLEWARE = [
