@@ -12,9 +12,6 @@ class Migration(migrations.Migration):
     dependencies = []
 
     operations = [
-        migrations.RunSQL(
-            "CREATE EXTENSION IF NOT EXISTS ltree", migrations.RunSQL.noop
-        ),
         migrations.CreateModel(
             name="TestModel",
             fields=[

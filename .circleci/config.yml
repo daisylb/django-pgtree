@@ -35,7 +35,7 @@ jobs:
           name: Installing top-level dependencies
           command: |
             export PATH=~/.local/bin:$PATH
-            pip install --user tox poetry
+            pip install --user tox poetry psycopg2-binary
       - run:
           name: Waiting for Postgres to start up
           command: |
@@ -46,6 +46,27 @@ jobs:
               sleep 1
             done
             echo Failed waiting for Postgres && exit 1
+      - run:
+          name: Creating Postgres database and ltree extension
+          command: |
+            python -c "
+            import psycopg2, os
+            from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+
+            def getcur(dbname):
+              conn = psycopg2.connect(
+                dbname=dbname,
+                host=os.environ['PG_HOST'],
+                user=os.environ['PG_USER'],
+                password=os.environ['PG_PASSWORD'],
+              )
+              conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+              return conn.cursor()
+
+            cur = getcur('postgres')
+            cur.execute('CREATE DATABASE \"django-pgtree-test\"')
+            cur = getcur('django-pgtree-test')
+            cur.execute('CREATE EXTENSION ltree')"
       - run:
           name: Running tests
           command: |

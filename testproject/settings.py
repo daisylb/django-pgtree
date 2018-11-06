@@ -37,9 +37,6 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # In this case we're creating the ltree extension in a migration,
-    # so it needs to come before django_pgtree (which does a CREATE
-    # FUNCTION that uses ltree in its migrations)
     "testproject.testapp",
     "django_pgtree",
 ]
@@ -84,6 +81,7 @@ DATABASES = {
         "HOST": os.environ.get("PG_HOST", ""),
         "USER": os.environ.get("PG_USER", ""),
         "PASSWORD": os.environ.get("PG_PASSWORD", ""),
+        "TEST": {"TEMPLATE": "template1", "NAME": "django-pgtree-test"},
     }
 }
 
