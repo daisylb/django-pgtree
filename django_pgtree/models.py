@@ -54,6 +54,8 @@ class TreeNode(models.Model):
         if self.__new_parent is not UNCHANGED:
             return self.__new_parent
         parent_path = self.tree_path[:-1]  # pylint: disable=unsubscriptable-object
+        if not parent_path:
+            return None
         return self.__class__.objects.get(tree_path=parent_path)
 
     @parent.setter

@@ -110,6 +110,10 @@ def test_roots(animal):
     assert [x.name for x in roots] == ["Animal", "Plant"]
 
 
+def test_root_has_null_parent(animal):
+    assert animal.parent is None
+
+
 def test_relocate_in_between(animal):
     seal = T.objects.get(name="Seal")
     cat = T.objects.get(name="Cat")
