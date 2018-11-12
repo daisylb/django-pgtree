@@ -86,7 +86,8 @@ class TreeNode(models.Model):
                 .order_by("tree_path")
                 .last()
             )
-            # nb: if we are trying to move into the first position, after will be none
+            # nb: if we are trying to move into the first position,
+            # new_prev_child will still be None after this block
 
         if new_next_child is None:
             new_next_child = (
@@ -102,7 +103,7 @@ class TreeNode(models.Model):
                 return
 
         if (
-            new_next_child is not None
+            new_prev_child is not None
             and new_prev_child.tree_path[:-1] != new_next_child.tree_path[:-1]
         ):
             raise ValueError("Before and after nodes aren't actually siblings")

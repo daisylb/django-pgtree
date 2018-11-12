@@ -130,6 +130,13 @@ def test_relocate_in_between_at_root(animal):
     assert [x.name for x in T.objects.roots()] == ["Animal", "Seal", "Plant"]
 
 
+def test_relocate_at_start_at_root(animal):
+    seal = T.objects.get(name="Seal")
+    seal.relocate(before=animal)
+    seal.save()
+    assert [x.name for x in T.objects.roots()] == ["Seal", "Animal", "Plant"]
+
+
 def test_ordering_past_10():
     for i in range(1, 12):
         T.objects.create(name=str(i))
