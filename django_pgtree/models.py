@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib.postgres.indexes import GistIndex
 from django.db import models
 from django.db.transaction import atomic
@@ -6,6 +8,7 @@ from .fields import LtreeField
 
 GAP = 10 ** 9
 PAD_LENGTH = 18
+logger = logging.getLogger(__name__)
 
 
 class LtreeConcat(models.Func):
@@ -161,12 +164,8 @@ class TreeNode(models.Model):
 
         if tree_path_needs_refresh:
             self.refresh_from_db(fields=("tree_path",))
-
-        print(
-            "for object {!r}, old_tree_path is {!r}, tree_path is {!r}".format(
-                self, old_tree_path, self.tree_path
-            )
-        )
+        logger.debug('For object %s, old_tree_path is %s, tree_path is',
+                     self, old_tree_path, self.tree_path)
         return rv
 
     @property
