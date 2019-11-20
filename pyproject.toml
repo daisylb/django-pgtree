@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "django-pgtree"
 version = "0.1.4"
-description = "Heirachial data for Django with Postgres."
+description = "Hierarchical data for Django with Postgres."
 authors = ["Adam Brenecki"]
 license = "ISC"
 
