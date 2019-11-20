@@ -20,7 +20,7 @@ On your development database and when you first deploy, you'll also need to run 
 
     CREATE EXTENSION ltree;
 
-This command needs to be run by the database superuser (usually the ``postgres`` user). If you know that your migrations will be run by this user, you can create a ``RunSQL`` migration that does this for you, but in most cases you'll need to do this when you create the database.
+This command needs to be run by the database superuser (usually the ``postgres`` user). If you know that your migrations will be run by this user, you can use our ``LtreeExtension`` migration operation (see more in :doc:`model`), but in most cases you'll need to do this when you create the database.
 
 .. tip::
 

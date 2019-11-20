@@ -12,7 +12,20 @@ This functionality is for when you want to model your data as a tree, of which m
     class Organism(TreeNode):
         name = models.CharField()
 
-You can create root nodes as you would any other normal model:
+If you haven't manually run the SQL query ``CREATE EXTENSION ltree`` before, you can do it in migration script:
+
+.. code-block:: python
+
+    from django_pgtree.dbext import LtreeExtension
+
+    class Migration(migrations.Migration):
+        operations = [
+            LtreeExtension(),
+            # Other migration operations
+        ]
+
+
+You can create root nodes as you would like any other normal model:
 
 .. code-block:: python
 

@@ -1,3 +1,4 @@
 .pytest_cache
 .tox
 docs/_build
+.vscode
